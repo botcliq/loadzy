@@ -45,8 +45,8 @@ import (
 )
 
 // Accepts a Httpaction and a one-way channel to write the results to.
-func DoHttpsRequest(httpAction HttpsAction, resultsChannel chan result.HttpReqResult, sessionMap map[string]string) {
-	req := buildHttpRequest(httpAction, sessionMap)
+func DoHttpsRequest(httpsAction HttpsAction, resultsChannel chan result.HttpReqResult, sessionMap map[string]string) {
+	req := buildHttpsRequest(httpsAction, sessionMap)
 
 	start := time.Now()
 	var DefaultTransport http.RoundTripper = &http.Transport{
@@ -62,32 +62,32 @@ func DoHttpsRequest(httpAction HttpsAction, resultsChannel chan result.HttpReqRe
 		if err != nil {
 			//log.Fatal(err)
 			log.Printf("Reading HTTP response failed: %s\n", err)
-			httpReqResult := buildHttpResult(0, resp.StatusCode, elapsed.Nanoseconds(), httpAction.Title)
+			httpReqResult := buildHttpResult(0, resp.StatusCode, elapsed.Nanoseconds(), httpsAction.Title)
 
 			resultsChannel <- httpReqResult
 		} else {
 			defer resp.Body.Close()
 
-			if httpAction.StoreCookie != "" {
+			if httpsAction.StoreCookie != "" {
 				for _, cookie := range resp.Cookies() {
 
-					if cookie.Name == httpAction.StoreCookie {
+					if cookie.Name == httpsAction.StoreCookie {
 						sessionMap["____"+cookie.Name] = cookie.Value
 					}
 				}
 			}
 
 			// if action specifies response action, parse using regexp/jsonpath
-			processResult(httpAction, sessionMap, responseBody)
+			processHTTPSResult(httpsAction, sessionMap, responseBody)
 
-			httpReqResult := buildHttpResult(len(responseBody), resp.StatusCode, elapsed.Nanoseconds(), httpAction.Title)
+			httpReqResult := buildHttpResult(len(responseBody), resp.StatusCode, elapsed.Nanoseconds(), httpsAction.Title)
 
 			resultsChannel <- httpReqResult
 		}
 	}
 }
 
-func buildHttpResult(contentLength int, status int, elapsed int64, title string) result.HttpReqResult {
+func buildHttpsResult(contentLength int, status int, elapsed int64, title string) result.HttpReqResult {
 	httpReqResult := result.HttpReqResult{
 		Type:    "HTTP",
 		Latency: elapsed,
@@ -99,7 +99,7 @@ func buildHttpResult(contentLength int, status int, elapsed int64, title string)
 	return httpReqResult
 }
 
-func buildHttpRequest(httpAction HttpsAction, sessionMap map[string]string) *http.Request {
+func buildHttpsRequest(httpAction HttpsAction, sessionMap map[string]string) *http.Request {
 	var req *http.Request
 	var err error
 	if httpAction.Body != "" {
@@ -155,9 +155,9 @@ func buildHttpRequest(httpAction HttpsAction, sessionMap map[string]string) *htt
  *
  * TODO extract both Jsonpath handling and Xmlpath handling into separate functions, and write tests for them.
  */
-func processResult(httpAction HttpsAction, sessionMap map[string]string, responseBody []byte) {
-	if httpAction.ResponseHandler.Jsonpath != "" {
-		jsonPattern, err := jsonpath.Compile(httpAction.ResponseHandler.Jsonpath)
+func processHTTPSResult(httpsAction HttpsAction, sessionMap map[string]string, responseBody []byte) {
+	if httpsAction.ResponseHandler.Jsonpath != "" {
+		jsonPattern, err := jsonpath.Compile(httpsAction.ResponseHandler.Jsonpath)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -184,11 +184,11 @@ func processResult(httpAction HttpsAction, sessionMap map[string]string, respons
 		default:
 			log.Printf("Unknown type [%T]", reflect.TypeOf(res))
 		}
-		passResultIntoSessionMap(resultArray, httpAction, sessionMap)
+		passResultIntoSessionMapHTTPS(resultArray, httpsAction, sessionMap)
 	}
 
-	if httpAction.ResponseHandler.Xmlpath != "" {
-		path := xmlpath.MustCompile(httpAction.ResponseHandler.Xmlpath)
+	if httpsAction.ResponseHandler.Xmlpath != "" {
+		path := xmlpath.MustCompile(httpsAction.ResponseHandler.Xmlpath)
 		r := bytes.NewReader(responseBody)
 		root, err := xmlpath.Parse(r)
 
@@ -209,7 +209,7 @@ func processResult(httpAction HttpsAction, sessionMap map[string]string, respons
 					break
 				}
 			}
-			passResultIntoSessionMap(resultsArray, httpAction, sessionMap)
+			passResultIntoSessionMapHTTPS(resultsArray, httpsAction, sessionMap)
 		}
 	}
 
@@ -219,7 +219,7 @@ func processResult(httpAction HttpsAction, sessionMap map[string]string, respons
 /**
  * Trims leading and trailing byte r from string s
  */
-func trimChar(s string, r byte) string {
+func trimHTTPSChar(s string, r byte) string {
 	sz := len(s)
 
 	if sz > 0 && s[sz-1] == r {
@@ -232,7 +232,7 @@ func trimChar(s string, r byte) string {
 	return s
 }
 
-func passResultIntoSessionMap(resultsArray []string, httpsAction HttpsAction, sessionMap map[string]string) {
+func passResultIntoSessionMapHTTPS(resultsArray []string, httpsAction HttpsAction, sessionMap map[string]string) {
 	resultCount := len(resultsArray)
 
 	if resultCount > 0 {

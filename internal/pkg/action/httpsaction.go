@@ -53,7 +53,7 @@ type HttpsResponseHandler struct {
 	Index    string `yaml:"index"`
 }
 
-func NewHttpAction(a map[interface{}]interface{}) HttpsAction {
+func NewHttpsAction(a map[interface{}]interface{}) HttpsAction {
 	valid := true
 	if a["url"] == "" || a["url"] == nil {
 		log.Println("Error: HttpAction must define a URL.")
