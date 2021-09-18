@@ -29,31 +29,31 @@ import (
 	"github.com/botcliq/loadzy/internal/pkg/result"
 )
 
-type HttpAction struct {
-	Method          string              `yaml:"method"`
-	Url             string              `yaml:"url"`
-	Body            string              `yaml:"body"`
-	Template        string              `yaml:"template"`
-	Accept          string              `yaml:"accept"`
-	ContentType     string              `yaml:"contentType"`
-	Title           string              `yaml:"title"`
-	ResponseHandler HttpResponseHandler `yaml:"response"`
-	StoreCookie     string              `yaml:"storeCookie"`
-	Headers         map[string]string   `yaml:"headers"`
+type HttpsAction struct {
+	Method          string               `yaml:"method"`
+	Url             string               `yaml:"url"`
+	Body            string               `yaml:"body"`
+	Template        string               `yaml:"template"`
+	Accept          string               `yaml:"accept"`
+	ContentType     string               `yaml:"contentType"`
+	Title           string               `yaml:"title"`
+	ResponseHandler HttpsResponseHandler `yaml:"response"`
+	StoreCookie     string               `yaml:"storeCookie"`
+	Headers         map[string]string    `yaml:"headers"`
 }
 
-func (h HttpAction) Execute(resultsChannel chan result.HttpReqResult, sessionMap map[string]string) {
-	DoHttpRequest(h, resultsChannel, sessionMap)
+func (h HttpsAction) Execute(resultsChannel chan result.HttpReqResult, sessionMap map[string]string) {
+	DoHttpsRequest(h, resultsChannel, sessionMap)
 }
 
-type HttpResponseHandler struct {
+type HttpsResponseHandler struct {
 	Jsonpath string `yaml:"jsonpath"`
 	Xmlpath  string `yaml:"xmlpath"`
 	Variable string `yaml:"variable"`
 	Index    string `yaml:"index"`
 }
 
-func NewHttpAction(a map[interface{}]interface{}) HttpAction {
+func NewHttpAction(a map[interface{}]interface{}) HttpsAction {
 	valid := true
 	if a["url"] == "" || a["url"] == nil {
 		log.Println("Error: HttpAction must define a URL.")
@@ -99,7 +99,7 @@ func NewHttpAction(a map[interface{}]interface{}) HttpAction {
 	if !valid {
 		log.Fatalf("Your YAML defintion contains an invalid HttpAction, see errors listed above.")
 	}
-	var responseHandler HttpResponseHandler
+	var responseHandler HttpsResponseHandler
 	if a["response"] != nil {
 		response := a["response"].(map[interface{}]interface{})
 
@@ -129,7 +129,7 @@ func NewHttpAction(a map[interface{}]interface{}) HttpAction {
 		storeCookie = a["storeCookie"].(string)
 	}
 
-	httpAction := HttpAction{
+	httpAction := HttpsAction{
 		a["method"].(string),
 		a["url"].(string),
 		getBody(a),

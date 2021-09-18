@@ -24,7 +24,7 @@ SOFTWARE.
 package action
 
 import (
-	"github.com/eriklupander/gotling/internal/pkg/result"
+	"github.com/botcliq/loadzy/internal/pkg/result"
 )
 
 type UdpAction struct {

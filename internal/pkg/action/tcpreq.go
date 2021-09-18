@@ -25,11 +25,12 @@ package action
 
 import (
 	"fmt"
-	"github.com/eriklupander/gotling/internal/pkg/result"
-	"github.com/eriklupander/gotling/internal/pkg/runtime"
-	"github.com/eriklupander/gotling/internal/pkg/util"
 	"net"
 	"time"
+
+	"github.com/botcliq/loadzy/internal/pkg/result"
+	"github.com/botcliq/loadzy/internal/pkg/runtime"
+	"github.com/botcliq/loadzy/internal/pkg/util"
 )
 
 var conn net.Conn

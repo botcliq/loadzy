@@ -28,7 +28,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/eriklupander/gotling/internal/pkg/testdef"
+	"github.com/botcliq/loadzy/internal/pkg/testdef"
 )
 
 func BuildActionList(t *testdef.TestDef) ([]Action, bool) {
@@ -44,6 +44,9 @@ func BuildActionList(t *testdef.TestDef) ([]Action, bool) {
 				break
 			case "http":
 				action = NewHttpAction(actionMap)
+				break
+			case "https":
+				action = NewHttpsAction(actionMap)
 				break
 			case "tcp":
 				action = NewTcpAction(actionMap)

@@ -25,8 +25,9 @@ package action
 
 import (
 	"fmt"
-	"github.com/eriklupander/gotling/internal/pkg/result"
 	"time"
+
+	"github.com/botcliq/loadzy/internal/pkg/result"
 )
 
 type SleepAction struct {
@@ -47,7 +48,7 @@ func NewSleepAction(a map[interface{}]interface{}) SleepAction {
 			fmt.Printf("Error trying to parse duration '%v' from string representation into Go duration format. Error: %v\n", val, err.Error())
 			panic(err.Error())
 		}
-		return SleepAction{Duration:dur}
+		return SleepAction{Duration: dur}
 	case time.Duration:
 		return SleepAction{Duration: val}
 	default:

@@ -26,9 +26,10 @@ package result
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/eriklupander/gotling/internal/pkg/runtime"
-	"github.com/eriklupander/gotling/internal/pkg/server"
 	"time"
+
+	"github.com/botcliq/loadzy/internal/pkg/runtime"
+	"github.com/botcliq/loadzy/internal/pkg/server"
 )
 
 /**

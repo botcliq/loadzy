@@ -23,7 +23,7 @@ SOFTWARE.
 */
 package action
 
-import "github.com/eriklupander/gotling/internal/pkg/result"
+import "github.com/botcliq/loadzy/internal/pkg/result"
 
 type TcpAction struct {
 	Address string `yaml:"address"`

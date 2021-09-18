@@ -45,7 +45,7 @@ import (
 )
 
 // Accepts a Httpaction and a one-way channel to write the results to.
-func DoHttpRequest(httpAction HttpAction, resultsChannel chan result.HttpReqResult, sessionMap map[string]string) {
+func DoHttpsRequest(httpAction HttpsAction, resultsChannel chan result.HttpReqResult, sessionMap map[string]string) {
 	req := buildHttpRequest(httpAction, sessionMap)
 
 	start := time.Now()
@@ -99,7 +99,7 @@ func buildHttpResult(contentLength int, status int, elapsed int64, title string)
 	return httpReqResult
 }
 
-func buildHttpRequest(httpAction HttpAction, sessionMap map[string]string) *http.Request {
+func buildHttpRequest(httpAction HttpsAction, sessionMap map[string]string) *http.Request {
 	var req *http.Request
 	var err error
 	if httpAction.Body != "" {
@@ -155,7 +155,7 @@ func buildHttpRequest(httpAction HttpAction, sessionMap map[string]string) *http
  *
  * TODO extract both Jsonpath handling and Xmlpath handling into separate functions, and write tests for them.
  */
-func processResult(httpAction HttpAction, sessionMap map[string]string, responseBody []byte) {
+func processResult(httpAction HttpsAction, sessionMap map[string]string, responseBody []byte) {
 	if httpAction.ResponseHandler.Jsonpath != "" {
 		jsonPattern, err := jsonpath.Compile(httpAction.ResponseHandler.Jsonpath)
 		if err != nil {
@@ -232,23 +232,23 @@ func trimChar(s string, r byte) string {
 	return s
 }
 
-func passResultIntoSessionMap(resultsArray []string, httpAction HttpAction, sessionMap map[string]string) {
+func passResultIntoSessionMap(resultsArray []string, httpsAction HttpsAction, sessionMap map[string]string) {
 	resultCount := len(resultsArray)
 
 	if resultCount > 0 {
-		switch httpAction.ResponseHandler.Index {
+		switch httpsAction.ResponseHandler.Index {
 		case testdef.FIRST:
-			sessionMap[httpAction.ResponseHandler.Variable] = resultsArray[0]
+			sessionMap[httpsAction.ResponseHandler.Variable] = resultsArray[0]
 			break
 		case testdef.LAST:
-			sessionMap[httpAction.ResponseHandler.Variable] = resultsArray[resultCount-1]
+			sessionMap[httpsAction.ResponseHandler.Variable] = resultsArray[resultCount-1]
 			break
 		case testdef.RANDOM:
 			if resultCount > 1 {
 				rand.Seed(time.Now().UnixNano())
-				sessionMap[httpAction.ResponseHandler.Variable] = resultsArray[rand.Intn(resultCount-1)]
+				sessionMap[httpsAction.ResponseHandler.Variable] = resultsArray[rand.Intn(resultCount-1)]
 			} else {
-				sessionMap[httpAction.ResponseHandler.Variable] = resultsArray[0]
+				sessionMap[httpsAction.ResponseHandler.Variable] = resultsArray[0]
 			}
 			break
 		}

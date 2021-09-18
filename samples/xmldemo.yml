@@ -1,18 +1,12 @@
 ---
-iterations: 1
-users: 1
-rampup: 3
+iterations: 10
+users: 100
+rampup: 5 
 actions:
   - http:
-      title: Read sample XML file
+      title: GET Policy 
       method: GET
-      url: http://www.w3schools.com/xml/cd_catalog.xml
-      accept: text/xml
-      response:
-              xmlpath: ///TITLE
-              variable: noteTo
-              index: random # first, random, last
-  - sleep:
-      duration: 3
-
-
+      url: http://localhost:8034/api/v1/authz/policy/
+      headers:
+        X-Request-ID: 6b89e1e3-e56d-4291-87cb-bda340200331
+      accept: application/json
