@@ -11,8 +11,26 @@ import (
 	"github.com/botcliq/loadzy/internal/pkg/feeder"
 	"github.com/botcliq/loadzy/internal/pkg/result"
 	"github.com/botcliq/loadzy/internal/pkg/testdef"
+	"github.com/botcliq/loadzy/internal/pkg/workers"
 	"go.uber.org/ratelimit"
 )
+
+type User struct {
+	Client  string
+	Id      int
+	Actions []*action.Action
+	Limiter chan *workers.Task
+}
+
+type Action struct {
+	User     *User
+	ActionId int
+	Api      string
+}
+
+func New(Id int, c chan *workers.Task) *User {
+	return &User{Id: Id, Limiter: c}
+}
 
 func SpawnUsers(t *testdef.TestDef, actions []action.Action) {
 	resultsChannel := make(chan result.HttpReqResult, 10000) // buffer?

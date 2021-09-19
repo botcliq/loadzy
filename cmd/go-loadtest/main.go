@@ -37,6 +37,7 @@ import (
 	ws "github.com/botcliq/loadzy/internal/pkg/server"
 	"github.com/botcliq/loadzy/internal/pkg/testdef"
 	"github.com/botcliq/loadzy/internal/pkg/user"
+	"github.com/botcliq/loadzy/internal/pkg/workers"
 	"gopkg.in/yaml.v2"
 	//"github.com/davecheney/profile"
 )
@@ -96,6 +97,19 @@ func parseSpecFile() string {
 		panic(fmt.Sprintf("Specified simulation file '%s' is not a .yml file", s))
 	}
 	return s
+}
+
+var userMap map[int]*user.User
+var Limiter chan *workers.Task
+
+func RunTraffic(t *testdef.TestDef) {
+	Limiter = make(chan *workers.Task, 1000)
+	userMap = make(map[int]*user.User)
+	for i := 1; i <= t.Users; i++ {
+		u = user.New(i, Limiter)
+		userMap[user.Id] = u
+	}
+
 }
 
 func fail(err error) {
