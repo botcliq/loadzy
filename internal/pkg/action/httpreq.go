@@ -32,6 +32,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/http/httputil"
 	"reflect"
 	"strings"
 	"time"
@@ -50,10 +51,19 @@ func DoHttpRequest(httpAction HttpAction, resultsChannel chan result.HttpReqResu
 	req := buildHttpRequest(httpAction, sessionMap)
 
 	start := time.Now()
+	r := stats.Result{Attack: "HTTP load"}
 	var DefaultTransport http.RoundTripper = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	stats.AddRequest(1, httpAction.Url)
+	stats.AddRequest(1, fmt.Sprintf("[%s:%s]->", httpAction.Url, httpAction.Method))
+	dumpedBody, err := httputil.DumpRequest(req, true)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		r.BytesOut = uint64(len(dumpedBody))
+	}
+
 	resp, err := DefaultTransport.RoundTrip(req)
 
 	if err != nil {
@@ -61,10 +71,12 @@ func DoHttpRequest(httpAction HttpAction, resultsChannel chan result.HttpReqResu
 	} else {
 		elapsed := time.Since(start)
 		responseBody, err := ioutil.ReadAll(resp.Body)
-		r := stats.Result{Attack: "HTTP load",
-			Timestamp: time.Now(),
-		}
-		r.Code = fmt.Sprintf("%s", resp.StatusCode)
+		r.Timestamp = time.Now()
+		r.Code = fmt.Sprintf("[%s:%d]->", httpAction.Url, resp.StatusCode)
+		r.Status = resp.StatusCode
+		r.BytesIn = uint64(len(responseBody))
+		r.Latency = elapsed
+
 		stats.Add(1, &r)
 
 		if err != nil {

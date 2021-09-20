@@ -36,6 +36,7 @@ type Result struct {
 	Method    string        `json:"method"`
 	URL       string        `json:"url"`
 	Headers   http.Header   `json:"headers"`
+	Status    int           `json:"status"`
 }
 
 // End returns the time at which a Result ended.

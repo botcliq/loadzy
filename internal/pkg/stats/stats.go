@@ -87,6 +87,10 @@ func (m *Metrics) Add(r *Result) {
 		m.success++
 	}
 
+	if r.Status < 300 && r.Status >= 200 {
+		m.success++
+	}
+
 	if r.Error != "" {
 		if _, ok := m.errors[r.Error]; !ok {
 			m.errors[r.Error] = struct{}{}
