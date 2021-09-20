@@ -1,9 +1,6 @@
 package user
 
 import (
-	"fmt"
-	"math/rand"
-	"strconv"
 	"sync"
 	"time"
 
@@ -12,7 +9,6 @@ import (
 	"github.com/botcliq/loadzy/internal/pkg/result"
 	"github.com/botcliq/loadzy/internal/pkg/testdef"
 	"github.com/botcliq/loadzy/internal/pkg/workers"
-	"go.uber.org/ratelimit"
 )
 
 type User struct {
@@ -32,23 +28,7 @@ func New(Id int, c chan *workers.Task) *User {
 	return &User{Id: Id, Limiter: c}
 }
 
-func SpawnUsers(t *testdef.TestDef, actions []action.Action) {
-	resultsChannel := make(chan result.HttpReqResult, 10000) // buffer?
-	go result.AcceptResults(resultsChannel)
-	wg := sync.WaitGroup{}
-	rlt := int(t.Rampup / len(t.Actions))
-	rl := ratelimit.New(rlt)
-	for i := 0; i < t.Users; i++ {
-		wg.Add(1)
-		_ = rl.Take()
-		UID := strconv.Itoa(rand.Intn(t.Users+1) + 10000)
-		go launchActions(t, resultsChannel, &wg, actions, UID)
-	}
-	fmt.Println("All users started, waiting at WaitGroup")
-	wg.Wait()
-}
-
-func launchActions(t *testdef.TestDef, resultsChannel chan result.HttpReqResult, wg *sync.WaitGroup, actions []action.Action, UID string) {
+func (u *User) LaunchActions(t *testdef.TestDef, resultsChannel chan result.HttpReqResult, wg *sync.WaitGroup, actions []action.Action, UID string) {
 	var sessionMap = make(map[string]string)
 
 	for i := 0; i < t.Iterations; i++ {
@@ -59,7 +39,8 @@ func launchActions(t *testdef.TestDef, resultsChannel chan result.HttpReqResult,
 		// Iterate over the actions. Note the use of the command-pattern like Execute method on the Action interface
 		for _, action := range actions {
 			if action != nil {
-				go action.Execute(resultsChannel, sessionMap)
+				t := workers.NewTask(action, resultsChannel, &sessionMap)
+				u.Limiter <- t
 			}
 		}
 		var waitDuration float32 = (float32(t.Users) / float32(t.Rampup)) * float32(len(t.Actions))

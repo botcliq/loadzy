@@ -27,7 +27,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/botcliq/loadzy/internal/pkg/action"
@@ -38,6 +41,7 @@ import (
 	"github.com/botcliq/loadzy/internal/pkg/testdef"
 	"github.com/botcliq/loadzy/internal/pkg/user"
 	"github.com/botcliq/loadzy/internal/pkg/workers"
+	"go.uber.org/ratelimit"
 	"gopkg.in/yaml.v2"
 	//"github.com/davecheney/profile"
 )
@@ -102,13 +106,39 @@ func parseSpecFile() string {
 var userMap map[int]*user.User
 var Limiter chan *workers.Task
 
-func RunTraffic(t *testdef.TestDef) {
+func RunTraffic(t *testdef.TestDef, actions []action.Action) {
+	// create worker pool
+	p := workers.GetPool(20)
+	// #create channel for user to use
 	Limiter = make(chan *workers.Task, 1000)
+	resultsChannel := make(chan result.HttpReqResult, 10000) // buffer?
+	go result.AcceptResults(resultsChannel)
+	wg := sync.WaitGroup{}
+	// create rate limiter.
+	rl := ratelimit.New(t.Rate)
 	userMap = make(map[int]*user.User)
-	for i := 1; i <= t.Users; i++ {
-		u = user.New(i, Limiter)
-		userMap[user.Id] = u
-	}
+	go func() {
+		for i := 1; i <= t.Users; i++ {
+			// Create new users
+			u := user.New(i, Limiter)
+			userMap[u.Id] = u
+			wg.Add(1)
+			UID := strconv.Itoa(rand.Intn(t.Users+1) + 10000)
+			go u.LaunchActions(t, resultsChannel, &wg, actions, UID)
+			var waitDuration float32 = float32(t.Rampup) / float32(t.Users)
+			time.Sleep(time.Duration(int(1000*waitDuration)) * time.Millisecond)
+
+		}
+	}()
+	// at specified rate read from the select.
+	go func() {
+		select {
+		case c := <-Limiter:
+			_ = rl.Take()
+			p.Collector <- c
+		}
+		wg.Wait()
+	}()
 
 }
 

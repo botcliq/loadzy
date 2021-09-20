@@ -31,6 +31,7 @@ type TestDef struct {
 	Iterations int                      `yaml:"iterations"`
 	Users      int                      `yaml:"users"`
 	Rampup     int                      `yaml:"rampup"`
+	Rate       int                      `yaml:"rate"`
 	Feeder     Feeder                   `yaml:"feeder"`
 	Actions    []map[string]interface{} `yaml:"actions"`
 }
