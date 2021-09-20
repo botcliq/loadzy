@@ -21,9 +21,9 @@ func NewPool(concurrency int) *Pool {
 
 // Run runs all work within the pool and blocks until it's
 // finished.
-func (p *Pool) Run(ip string, port int) {
+func (p *Pool) Run() {
 	for i := 1; i <= p.concurrency; i++ {
-		worker := NewWorker(p.Collector, i, ip, port)
+		worker := NewWorker(p.Collector, i)
 		worker.Start()
 	}
 }

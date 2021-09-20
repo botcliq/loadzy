@@ -38,6 +38,7 @@ import (
 
 	"github.com/botcliq/loadzy/internal/pkg/result"
 	"github.com/botcliq/loadzy/internal/pkg/runtime"
+	"github.com/botcliq/loadzy/internal/pkg/stats"
 	"github.com/botcliq/loadzy/internal/pkg/testdef"
 	"github.com/botcliq/loadzy/internal/pkg/util"
 	"github.com/oliveagle/jsonpath"
@@ -52,6 +53,7 @@ func DoHttpRequest(httpAction HttpAction, resultsChannel chan result.HttpReqResu
 	var DefaultTransport http.RoundTripper = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
+	stats.AddRequest(1, httpAction.Url)
 	resp, err := DefaultTransport.RoundTrip(req)
 
 	if err != nil {
@@ -59,6 +61,12 @@ func DoHttpRequest(httpAction HttpAction, resultsChannel chan result.HttpReqResu
 	} else {
 		elapsed := time.Since(start)
 		responseBody, err := ioutil.ReadAll(resp.Body)
+		r := stats.Result{Attack: "HTTP load",
+			Timestamp: time.Now(),
+		}
+		r.Code = fmt.Sprintf("%s", resp.StatusCode)
+		stats.Add(1, &r)
+
 		if err != nil {
 			//log.Fatal(err)
 			log.Printf("Reading HTTP response failed: %s\n", err)

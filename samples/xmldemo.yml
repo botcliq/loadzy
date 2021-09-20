@@ -1,12 +1,13 @@
 ---
 iterations: 10
-users: 100
-rampup: 5 
+users: 1010
+rate: 10
+rampup: 20 
 actions:
   - http:
       title: GET Policy 
       method: GET
-      url: http://localhost:8034/api/v1/authz/policy/
+      url: http://localhost:8034/api/v1/authz/profile/
       headers:
         X-Request-ID: 6b89e1e3-e56d-4291-87cb-bda340200331
       accept: application/json

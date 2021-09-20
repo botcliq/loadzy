@@ -18,12 +18,6 @@ type User struct {
 	Limiter chan *workers.Task
 }
 
-type Action struct {
-	User     *User
-	ActionId int
-	Api      string
-}
-
 func New(Id int, c chan *workers.Task) *User {
 	return &User{Id: Id, Limiter: c}
 }
@@ -39,14 +33,13 @@ func (u *User) LaunchActions(t *testdef.TestDef, resultsChannel chan result.Http
 		// Iterate over the actions. Note the use of the command-pattern like Execute method on the Action interface
 		for _, action := range actions {
 			if action != nil {
-				t := workers.NewTask(action, resultsChannel, &sessionMap)
+				t := workers.NewTask(action, resultsChannel, &sessionMap, wg)
 				u.Limiter <- t
 			}
 		}
 		var waitDuration float32 = (float32(t.Users) / float32(t.Rampup)) * float32(len(t.Actions))
 		time.Sleep(time.Duration(int(1000*waitDuration)) * time.Millisecond)
 	}
-	wg.Done()
 }
 
 func cleanSessionMapAndResetUID(UID string, sessionMap map[string]string) {

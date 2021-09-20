@@ -25,7 +25,6 @@ package result
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/botcliq/loadzy/internal/pkg/runtime"
@@ -69,7 +68,7 @@ func assembleAndSendResult(totalReq int, totalLatency int) {
 		avgLatency, // microseconds
 		totalReq,
 	}
-	fmt.Printf("Time: %d Avg latency: %d μs (%d ms) req/s: %d\n", statFrame.Time, statFrame.Latency, statFrame.Latency/1000, statFrame.Reqs)
+	// fmt.Printf("Time: %d Avg latency: %d μs (%d ms) req/s: %d\n", statFrame.Time, statFrame.Latency, statFrame.Latency/1000, statFrame.Reqs)
 
 	serializedFrame, _ := json.Marshal(statFrame)
 	server.BroadcastStatFrame(serializedFrame)

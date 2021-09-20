@@ -38,6 +38,7 @@ import (
 	"github.com/botcliq/loadzy/internal/pkg/result"
 	"github.com/botcliq/loadzy/internal/pkg/runtime"
 	ws "github.com/botcliq/loadzy/internal/pkg/server"
+	"github.com/botcliq/loadzy/internal/pkg/stats"
 	"github.com/botcliq/loadzy/internal/pkg/testdef"
 	"github.com/botcliq/loadzy/internal/pkg/user"
 	"github.com/botcliq/loadzy/internal/pkg/workers"
@@ -54,7 +55,8 @@ func main() {
 
 	// Start the web socket server, will not block exit until forced
 	go ws.StartWsServer()
-
+	stats.ClearOrAddMetrics(1)
+	_ = stats.Slowest()
 	runtime.SimulationStart = time.Now()
 	dir, _ := os.Getwd()
 	dat, _ := ioutil.ReadFile(dir + "/" + spec)
@@ -79,7 +81,7 @@ func main() {
 	}
 
 	result.OpenResultsFile(dir + "/results/log/latest.log")
-	user.SpawnUsers(&t, actions)
+	RunTraffic(&t, actions)
 
 	fmt.Printf("Done in %v\n", time.Since(runtime.SimulationStart))
 	fmt.Println("Building reports, please wait...")
@@ -108,8 +110,11 @@ var Limiter chan *workers.Task
 
 func RunTraffic(t *testdef.TestDef, actions []action.Action) {
 	// create worker pool
+	fmt.Println("Creating worker pool.")
 	p := workers.GetPool(20)
+	p.Run()
 	// #create channel for user to use
+	fmt.Println("Creating limiter")
 	Limiter = make(chan *workers.Task, 1000)
 	resultsChannel := make(chan result.HttpReqResult, 10000) // buffer?
 	go result.AcceptResults(resultsChannel)
@@ -117,9 +122,11 @@ func RunTraffic(t *testdef.TestDef, actions []action.Action) {
 	// create rate limiter.
 	rl := ratelimit.New(t.Rate)
 	userMap = make(map[int]*user.User)
+	wg.Add(1)
 	go func() {
 		for i := 1; i <= t.Users; i++ {
 			// Create new users
+			// fmt.Println("Creating new user.")
 			u := user.New(i, Limiter)
 			userMap[u.Id] = u
 			wg.Add(1)
@@ -127,19 +134,30 @@ func RunTraffic(t *testdef.TestDef, actions []action.Action) {
 			go u.LaunchActions(t, resultsChannel, &wg, actions, UID)
 			var waitDuration float32 = float32(t.Rampup) / float32(t.Users)
 			time.Sleep(time.Duration(int(1000*waitDuration)) * time.Millisecond)
-
 		}
+		wg.Done()
 	}()
 	// at specified rate read from the select.
-	go func() {
-		select {
-		case c := <-Limiter:
-			_ = rl.Take()
-			p.Collector <- c
-		}
-		wg.Wait()
-	}()
+	fmt.Println("Waiting for date on the select !!")
 
+	go func() {
+		for {
+			select {
+			case c := <-Limiter:
+				_ = rl.Take()
+				p.Collector <- c
+			}
+		}
+	}()
+	wg.Wait()
+	mt := stats.GetMetric(1)
+	if mt != nil {
+		mt.Close()
+		log.Println("Getting stats:")
+
+		tRep := stats.NewTextReporter(mt)
+		tRep.Report(os.Stdout)
+	}
 }
 
 func fail(err error) {

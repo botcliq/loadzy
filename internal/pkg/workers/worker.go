@@ -12,7 +12,7 @@ type Worker struct {
 }
 
 // NewWorker returns new instance of worker
-func NewWorker(channel chan *Task, ID int, ip string, port int) *Worker {
+func NewWorker(channel chan *Task, ID int) *Worker {
 	return &Worker{
 		ID:       ID,
 		taskChan: channel,
